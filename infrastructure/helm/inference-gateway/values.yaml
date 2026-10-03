@@ -1,0 +1,93 @@
+﻿# РљРѕР»РёС‡РµСЃС‚РІРѕ СЂРµРїР»РёРє РїРѕРґР°
+strategy:
+  type: Recreate
+replicaCount: 1
+
+image:
+  repository: ghcr.io/toosparks/inference-gateway
+  tag: latest
+  pullPolicy: IfNotPresent
+
+# РЎРµРєСЂРµС‚ РґР»СЏ pull РёР· ghcr.io
+imagePullSecrets:
+  - name: ghcr-secret
+
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  name: ""
+  annotations: {}
+
+podAnnotations: {}
+podLabels: {}
+
+podSecurityContext: {}
+securityContext: {}
+
+service:
+  type: ClusterIP
+  port: 8000
+  targetPort: 8000
+
+# Р РµСЃСѓСЂСЃС‹ вЂ” СѓРІРµР»РёС‡РµРЅС‹ РїРѕРґ Spring Boot + DJL + GPT-2
+resources:
+  requests:
+    memory: "768Mi"
+    cpu: "200m"
+  limits:
+    memory: "1536Mi"
+    cpu: "1000m"
+
+# startupProbe вЂ” РґР°С‘С‚ РїСЂРёР»РѕР¶РµРЅРёСЋ РІСЂРµРјСЏ РЅР° РёРЅРёС†РёР°Р»РёР·Р°С†РёСЋ Р‘Р•Р— kill
+# РџРѕРєР° startupProbe РЅРµ РїСЂРѕР№РґС‘С‚, liveness/readiness РЅРµ Р·Р°РїСѓСЃРєР°СЋС‚СЃСЏ
+startupProbe:
+  httpGet:
+    path: /actuator/health
+    port: 8000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  failureThreshold: 60
+  timeoutSeconds: 3
+
+livenessProbe:
+  httpGet:
+    path: /actuator/health/liveness
+    port: 8000
+  initialDelaySeconds: 0
+  periodSeconds: 20
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+readinessProbe:
+  httpGet:
+    path: /actuator/health/readiness
+    port: 8000
+  initialDelaySeconds: 0
+  periodSeconds: 10
+  failureThreshold: 3
+  timeoutSeconds: 5
+
+# РџРµСЂРµРјРµРЅРЅС‹Рµ РѕРєСЂСѓР¶РµРЅРёСЏ
+env:
+  - name: SPRING_PROFILES_ACTIVE
+    value: "k8s"
+  - name: REDIS_HOST
+    value: "192.168.65.254"
+  - name: REDIS_PORT
+    value: "6379"
+  - name: KAFKA_BOOTSTRAP_SERVERS
+    value: "kafka:9092"
+  - name: BILLING_URL
+    value: "http://billing:8081"
+  - name: MODEL_REGISTRY_URL
+    value: "http://model-registry:8082"
+  - name: BATCH_PROCESSOR_URL
+    value: "http://batch-processor:8083"
+  - name: DRIFT_DETECTOR_URL
+    value: "http://drift-detector:8084"
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
