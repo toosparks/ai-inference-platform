@@ -87,7 +87,8 @@ env:
     value: "http://batch-processor:8083"
   - name: DRIFT_DETECTOR_URL
     value: "http://drift-detector:8084"
-
+  - name: MY_TEST_VARIABLE
+    value: "gitops-works"
 nodeSelector: {}
 tolerations: []
 affinity: {}
